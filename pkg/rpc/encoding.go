@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"bytes"
+	"encoding"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -21,7 +22,7 @@ type Error struct {
 	Message      string
 	Code         uint32
 	Variables    []string
-	IncidentUuid *uuid.UUID
+	IncidentUUID *uuid.UUID
 }
 
 // NewError creates a RPC Error incl. UUID
@@ -31,12 +32,12 @@ func NewError(message string, code uint32) *Error {
 
 // NewErrorVariables creates a RPC Error incl. UUID
 func NewErrorVariables(message string, code uint32, vars []string) *Error {
-	uuid := uuid.New()
+	u := uuid.New()
 	return &Error{
 		Message:      message,
 		Code:         code,
 		Variables:    vars,
-		IncidentUuid: &uuid,
+		IncidentUUID: &u,
 	}
 }
 
@@ -50,7 +51,7 @@ func (e *Error) Zap() {
 	zap.S().Warnw(e.Message,
 		"code", e.Code,
 		"variables", e.Variables,
-		"uuid", e.IncidentUuid,
+		"uuid", e.IncidentUUID,
 	)
 }
 
@@ -246,11 +247,11 @@ func (con *Connection) SendError(e error) error {
 			err.Message,
 			err.Code,
 			err.Variables,
-			err.IncidentUuid,
+			err.IncidentUUID,
 		)
 	}
 	ex := NewError(e.Error(), 1)
-	zap.S().Warnw("raised exception from error", "error", e, "ex", ex, "uuid", ex.IncidentUuid)
+	zap.S().Warnw("raised exception from error", "error", e, "ex", ex, "uuid", ex.IncidentUUID)
 	return con.SendError(ex)
 }
 
@@ -260,7 +261,7 @@ func (con *Connection) SendException(s string, code uint32) error {
 }
 
 // SendExceptionVariables send it with optional vars and/or uuid
-func (con *Connection) SendExceptionVariables(s string, code uint32, variables []string, uuid *uuid.UUID) error {
+func (con *Connection) SendExceptionVariables(s string, code uint32, variables []string, u encoding.BinaryMarshaler) error {
 	// Create protobuf with exception
 	e := &pb.Exception{
 		Message: s,
@@ -269,19 +270,21 @@ func (con *Connection) SendExceptionVariables(s string, code uint32, variables [
 	if len(variables) > 0 {
 		e.Variables = variables
 	}
-	if uuid != nil {
-		if bytes, err := uuid.MarshalBinary(); err == nil {
-			e.IncidentUuid = bytes
+	if u != nil {
+		if b, err := u.MarshalBinary(); err == nil {
+			e.IncidentUuid = b
 		}
 	}
-
-	data, err := proto.Marshal(e)
+	var data []byte
+	var err error
+	data, err = proto.Marshal(e)
 	if err != nil {
 		zap.S().Fatal(err)
 	}
 
 	buf := bytes.NewBuffer(make([]byte, 0, 8))
-	if err = con.SendValue(int32(-1), true, buf); err != nil {
+	err = con.SendValue(int32(-1), true, buf)
+	if err != nil {
 		return err
 	}
 	_, err = con.SendBytes(data, 0)

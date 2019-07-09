@@ -45,13 +45,13 @@ func NewConnection(t zmq.Type) (*Connection, error) {
 	return &con, nil
 }
 
-func (cn *Connection) UsedAt() time.Time {
-	unix := atomic.LoadInt64(&cn.usedAt)
+func (con *Connection) UsedAt() time.Time {
+	unix := atomic.LoadInt64(&con.usedAt)
 	return time.Unix(unix, 0)
 }
 
-func (cn *Connection) SetUsedAt(tm time.Time) {
-	atomic.StoreInt64(&cn.usedAt, tm.Unix())
+func (con *Connection) SetUsedAt(tm time.Time) {
+	atomic.StoreInt64(&con.usedAt, tm.Unix())
 }
 
 // Read makes the connection compatible with the Reader interface
@@ -80,7 +80,7 @@ func SimplifiedSRV(ctx context.Context, service, domain string) (string, uint16,
 		return "", 0, err
 	}
 	if len(addrs) == 0 {
-		return "", 0, fmt.Errorf("No SRV records for %s._tcp.%s", service, fqdn)
+		return "", 0, fmt.Errorf("no SRV records for %s._tcp.%s", service, fqdn)
 	}
 	first := addrs[0]
 	return first.Target, first.Port, nil
@@ -124,12 +124,14 @@ func (con *Connection) Reconnect() error {
 		}
 		con.pollid = -1
 	}
-	if socket, err := zmq.NewSocket(con.zmqtype); err != nil {
+	var socket *zmq.Socket
+	var err error
+	if socket, err = zmq.NewSocket(con.zmqtype); err != nil {
 		return err
-	} else {
-		con.Socket = socket
 	}
-	if err := con.Socket.Connect(con.Endpoint); err != nil {
+	con.Socket = socket
+	err = con.Socket.Connect(con.Endpoint)
+	if err != nil {
 		return err
 	}
 	con.pollid = con.Poller.Add(con.Socket, zmq.POLLIN)

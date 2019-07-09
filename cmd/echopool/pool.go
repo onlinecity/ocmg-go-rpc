@@ -18,7 +18,7 @@ func test(pool *rpc.ConnPool, timeout time.Duration) {
 	if err != nil {
 		zap.S().Fatal(err)
 	}
-	if body, err := client.Call("TestSingleEcho", ctx, "foo"); err != nil || body != 1 {
+	if body, err := client.Call(ctx, "TestSingleEcho", "foo"); err != nil || body != 1 {
 		zap.S().Fatalw("TestSingleEcho failed", "err", err, "body", body)
 	}
 	var foo string
