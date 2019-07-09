@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"flag"
-	"go.uber.org/zap"
 	"sync"
 	"time"
 
 	"github.com/onlinecity/ocmg-go-rpc/pkg/rpc"
+	"go.uber.org/zap"
 )
 
 func test(pool *rpc.ConnPool, timeout time.Duration) {
@@ -77,6 +77,4 @@ func main() {
 		go loop(servPool, wg, iterations, i)
 	}
 	wg.Wait()
-
-	time.Sleep(time.Duration(15) * time.Second)
 }

@@ -25,7 +25,7 @@ func serverWorker() {
 	}
 
 	// The handler implements the actual service, this file is just boiler plate
-	handler := RpcHandler{}
+	handler := RPCHandler{}
 
 	// Setup Service
 	for {
@@ -54,7 +54,7 @@ func serverWorker() {
 			}
 		case "discover":
 			// Send it back to the caller
-			service := reflect.TypeOf((*RpcService)(nil)).Elem()
+			service := reflect.TypeOf((*RPCService)(nil)).Elem()
 			if err := conn.SendReply(rpc.ReflectService(service, "echo", 0)); err != nil {
 				zap.S().Error(err)
 			}
@@ -74,10 +74,8 @@ func serverWorker() {
 			res, err := handler.TestSingleEcho(arg)
 			if err != nil {
 				_ = conn.SendError(err)
-			} else {
-				if err := conn.SendReply(res); err != nil {
-					zap.S().Error(err)
-				}
+			} else if err := conn.SendReply(res); err != nil {
+				zap.S().Error(err)
 			}
 		case "TestEchoDuplicate":
 			// This one takes two arguments
@@ -89,10 +87,8 @@ func serverWorker() {
 			res, err := handler.TestEchoDuplicate(arg, repeat)
 			if err != nil {
 				_ = conn.SendError(err)
-			} else {
-				if err := conn.SendReply(res); err != nil {
-					zap.S().Error(err)
-				}
+			} else if err := conn.SendReply(res); err != nil {
+				zap.S().Error(err)
 			}
 		case "TestException":
 			err := handler.TestException()

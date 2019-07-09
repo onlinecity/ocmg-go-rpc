@@ -6,7 +6,7 @@ import (
 )
 
 // declare the interface for this service, used for reflection
-type RpcService interface {
+type RPCService interface {
 	TestVoid() error
 	TestSingleEcho([]byte) ([]byte, error)
 	TestEchoDuplicate([]byte, int32) ([][]byte, error)
@@ -17,17 +17,17 @@ type RpcService interface {
 }
 
 // implementation of this simple server
-type RpcHandler struct{}
+type RPCHandler struct{}
 
-func (h *RpcHandler) TestVoid() error {
+func (h *RPCHandler) TestVoid() error {
 	return nil
 }
 
-func (h *RpcHandler) TestSingleEcho(arg []byte) ([]byte, error) {
+func (h *RPCHandler) TestSingleEcho(arg []byte) ([]byte, error) {
 	return arg, nil
 }
 
-func (h *RpcHandler) TestEchoDuplicate(arg []byte, repeat int32) ([][]byte, error) {
+func (h *RPCHandler) TestEchoDuplicate(arg []byte, repeat int32) ([][]byte, error) {
 	res := make([][]byte, 0, repeat)
 	var i int32
 	for ; i < repeat; i++ {
@@ -36,7 +36,7 @@ func (h *RpcHandler) TestEchoDuplicate(arg []byte, repeat int32) ([][]byte, erro
 	return res, nil
 }
 
-func (h *RpcHandler) TestException() error {
+func (h *RPCHandler) TestException() error {
 	err := rpc.NewErrorVariables(
 		"Temporary blacklist for MSISDN %1 with hash %2",
 		0x0214,
@@ -46,17 +46,17 @@ func (h *RpcHandler) TestException() error {
 	return err
 }
 
-func (h *RpcHandler) Healthz() error {
+func (h *RPCHandler) Healthz() error {
 	return nil
 }
 
-func (h *RpcHandler) Idle() error {
+func (h *RPCHandler) Idle() error {
 	return nil
 }
 
-func (h *RpcHandler) TestProtobuf() ([]*ocmg.MobileRecipient, error) {
+func (h *RPCHandler) TestProtobuf() ([]*ocmg.MobileRecipient, error) {
 	return []*ocmg.MobileRecipient{
-		&ocmg.MobileRecipient{Msisdn: uint64(4526159917)},
-		&ocmg.MobileRecipient{Msisdn: uint64(4526149424)},
+		{Msisdn: uint64(4526159917)},
+		{Msisdn: uint64(4526149424)},
 	}, nil
 }
