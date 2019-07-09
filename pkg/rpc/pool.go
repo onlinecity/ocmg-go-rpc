@@ -49,9 +49,12 @@ type Pooler interface {
 	Close() error
 }
 
-func NewSrvResolver(service string) func(context.Context) (string, error) {
+func NewSrvResolver(service, domain string) func(context.Context) (string, error) {
 	return func(ctx context.Context) (string, error) {
-		host, port, err := SimplifiedSRV(ctx, service, DefaultDomain)
+		if domain == "" {
+			domain = DefaultDomain
+		}
+		host, port, err := SimplifiedSRV(ctx, service, domain)
 		if err != nil {
 			return "", err
 		}
