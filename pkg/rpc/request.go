@@ -39,6 +39,7 @@ func (con *Connection) Call(method string, ctx context.Context, args ...interfac
 // See Call() and CallRepeat() for go context based versions
 // Returns -2, context.DeadlineExceeded if the poll times out
 func (con *Connection) CallDuration(method string, poll time.Duration, args ...interface{}) (int32, error) {
+	con.SetUsedAt(time.Now())
 	bodylen := len(args)
 
 	var flag zmq.Flag
