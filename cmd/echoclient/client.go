@@ -46,7 +46,7 @@ func main() {
 	}
 
 	zap.S().Info("test discover()")
-	if body, err := client.Call("discover", ctx); err != nil || body != 1 {
+	if body, err := client.Call(ctx, "discover"); err != nil || body != 1 {
 		zap.S().Fatalw("discover failed", "err", err, "body", body)
 	} else {
 		s := &pb.Service{}
@@ -57,12 +57,12 @@ func main() {
 	}
 
 	zap.S().Info("TestVoid()")
-	if body, err := client.Call("TestVoid", ctx); err != nil || body != 0 {
+	if body, err := client.Call(ctx, "TestVoid"); err != nil || body != 0 {
 		zap.S().Fatalw("TestVoid failed", "err", err, "body", body)
 	}
 
 	zap.S().Info("TestSingleEcho()")
-	if body, err := client.Call("TestSingleEcho", ctx, "foo"); err != nil || body != 1 {
+	if body, err := client.Call(ctx, "TestSingleEcho", "foo"); err != nil || body != 1 {
 		zap.S().Fatalw("TestSingleEcho failed", "err", err, "body", body)
 	}
 	var foo string
@@ -71,7 +71,7 @@ func main() {
 	}
 
 	zap.S().Info("TestEchoDuplicate()")
-	if body, err := client.Call("TestEchoDuplicate", ctx, "foo", int32(42)); err != nil || body != 42 {
+	if body, err := client.Call(ctx, "TestEchoDuplicate", "foo", int32(42)); err != nil || body != 42 {
 		zap.S().Fatalw("TestEchoDuplicate failed", "err", err, "body", body)
 	}
 	for i := 0; i < 42; i++ {
@@ -81,7 +81,7 @@ func main() {
 	}
 
 	zap.S().Info("TestProtobuf()")
-	if body, err := client.Call("TestProtobuf", ctx); err != nil || body != 2 {
+	if body, err := client.Call(ctx, "TestProtobuf"); err != nil || body != 2 {
 		zap.S().Fatalw("TestProtobuf failed", "err", err, "body", body)
 	}
 
@@ -93,7 +93,7 @@ func main() {
 	}
 
 	zap.S().Info("TestException()")
-	if body, err := client.Call("TestException", ctx); body != -1 {
+	if body, err := client.Call(ctx, "TestException"); body != -1 {
 		zap.S().Fatalw("TestException failed", "err", err, "body", body)
 	} else {
 		ex := err.(*rpc.Error)
@@ -106,7 +106,7 @@ func main() {
 		if len(ex.Variables) != 2 {
 			zap.S().Fatalw("unexpected variables", "ex", ex, "vars", ex.Variables)
 		}
-		zap.S().Infow("exception received", "ex", ex, "uuid", ex.IncidentUuid)
+		zap.S().Infow("exception received", "ex", ex, "uuid", ex.IncidentUUID)
 	}
 
 }

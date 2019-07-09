@@ -20,7 +20,7 @@ const DefaultTimeout = 30 * time.Second
 // It will inspect the reply header, and return it as the first argument
 // If it receives an upstream error, it will be returned as -1, upstream error
 // If a communication error occurs, it will be returned as -2, error
-func (con *Connection) Call(method string, ctx context.Context, args ...interface{}) (int32, error) {
+func (con *Connection) Call(ctx context.Context, method string, args ...interface{}) (int32, error) {
 	if ctx.Err() != nil {
 		return -2, ctx.Err()
 	}
@@ -39,6 +39,7 @@ func (con *Connection) Call(method string, ctx context.Context, args ...interfac
 // See Call() and CallRepeat() for go context based versions
 // Returns -2, context.DeadlineExceeded if the poll times out
 func (con *Connection) CallDuration(method string, poll time.Duration, args ...interface{}) (int32, error) {
+	con.SetUsedAt(time.Now())
 	bodylen := len(args)
 
 	var flag zmq.Flag
@@ -66,9 +67,8 @@ func (con *Connection) CallDuration(method string, poll time.Duration, args ...i
 	if data, err := con.Poll(poll); err != nil || !data {
 		if err != nil {
 			return -2, err
-		} else {
-			return -2, context.DeadlineExceeded
 		}
+		return -2, context.DeadlineExceeded
 	}
 
 	// Parse the reply
@@ -96,7 +96,7 @@ func (con *Connection) CallDuration(method string, poll time.Duration, args ...i
 			Message:      ex.GetMessage(),
 			Code:         ex.GetCode(),
 			Variables:    ex.GetVariables(),
-			IncidentUuid: u,
+			IncidentUUID: u,
 		}
 	}
 
@@ -106,7 +106,7 @@ func (con *Connection) CallDuration(method string, poll time.Duration, args ...i
 // CallRepeat will call the RPC method until a positive reply is received, honoring the context
 // Set the context to enforce overall timeout and/or cancellation
 // Specify the repeat rate, keep it large enough for the server to realistically respond, but low enough so retrying works
-func (con *Connection) CallRepeat(method string, rate time.Duration, ctx context.Context, args ...interface{}) (int32, error) {
+func (con *Connection) CallRepeat(ctx context.Context, method string, rate time.Duration, args ...interface{}) (int32, error) {
 	for {
 		if ctx.Err() != nil {
 			return -2, ctx.Err()
@@ -121,12 +121,14 @@ func (con *Connection) CallRepeat(method string, rate time.Duration, ctx context
 			poll = rate
 		}
 		res, err := con.CallDuration(method, poll, args...)
-		if err == context.DeadlineExceeded {
+		switch {
+		case err == context.DeadlineExceeded:
 			// Reconnect and try again
-			if err := con.Reconnect(); err != nil {
+			err = con.Reconnect()
+			if err != nil {
 				return -2, err
 			}
-		} else if err != nil && res != -1 {
+		case err != nil && res != -1:
 			// Something bad happened
 			zap.S().Warn(err)
 
@@ -135,11 +137,12 @@ func (con *Connection) CallRepeat(method string, rate time.Duration, ctx context
 			case <-ctx.Done():
 				return -2, ctx.Err()
 			case <-time.After(rate):
-				if err := con.Reconnect(); err != nil {
+				err = con.Reconnect()
+				if err != nil {
 					return -2, err
 				}
 			}
-		} else {
+		default:
 			return res, err
 		}
 	}
