@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -13,16 +14,17 @@ import (
 	"github.com/google/uuid"
 	zmq "github.com/pebbe/zmq4"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	pb "github.com/onlinecity/ocmg-api/gen/go/oc/pb/rpc"
 )
 
 type Error struct {
 	error
-	Message      string
-	Code         uint32
-	Variables    []string
-	IncidentUUID *uuid.UUID
+	Message      string     `json:"message"`
+	Code         uint32     `json:"-"`
+	Variables    []string   `json:"variables"`
+	IncidentUUID *uuid.UUID `json:"incident_uuid"`
 }
 
 // NewError creates a RPC Error incl. UUID
@@ -48,11 +50,36 @@ func (e *Error) Error() string {
 
 // Zap structured logging
 func (e *Error) Zap() {
-	zap.S().Warnw(e.Message,
-		"code", e.Code,
-		"variables", e.Variables,
-		"uuid", e.IncidentUUID,
+	zap.L().Warn(e.Message,
+		zap.Uint32("code", e.Code),
+		zap.Strings("variables", e.Variables),
+		zap.Stringer("uuid", e.IncidentUUID),
 	)
+}
+
+func (e *Error) MarshalLogObject(enc zapcore.ObjectEncoder) error {
+	enc.AddUint32("code", e.Code)
+	enc.AddString("message", e.Message)
+	if e.IncidentUUID != nil {
+		enc.AddString("uuid", e.IncidentUUID.String())
+	}
+	if len(e.Variables) > 0 {
+		if err := enc.AddReflected("variables", e.Variables); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (e *Error) MarshalJSON() ([]byte, error) {
+	type Alias Error
+	return json.Marshal(&struct {
+		Code string `json:"code"`
+		*Alias
+	}{
+		Code:  fmt.Sprintf("0x%04X", (*Alias)(e).Code),
+		Alias: (*Alias)(e),
+	})
 }
 
 // RecvValue reads a single value from the socket and decodes it
@@ -101,7 +128,7 @@ func (con *Connection) RecvValue(a interface{}) error {
 		}
 		return nil
 	default:
-		zap.S().Fatalw("unsupported type", "arg", a)
+		zap.L().Panic("unsupported type", zap.Reflect("arg", a), zap.Stack("stack"))
 	}
 	return nil
 }
@@ -198,7 +225,11 @@ func (con *Connection) SendValue(a interface{}, more bool, buf *bytes.Buffer) er
 		}
 	default:
 		t := reflect.TypeOf(a)
-		zap.S().Fatalw("unsupported type", "arg", a, "type", t)
+		zap.L().Panic("unsupported type",
+			zap.Reflect("arg", a),
+			zap.Reflect("type", t),
+			zap.Stack("stack"),
+		)
 	}
 	return nil
 }
@@ -251,7 +282,11 @@ func (con *Connection) SendError(e error) error {
 		)
 	}
 	ex := NewError(e.Error(), 1)
-	zap.S().Warnw("raised exception from error", "error", e, "ex", ex, "uuid", ex.IncidentUUID)
+	zap.L().Warn("raised exception from error",
+		zap.Error(e),
+		zap.Object("ex", ex),
+		zap.Stringer("uuid", ex.IncidentUUID),
+	)
 	return con.SendError(ex)
 }
 
@@ -279,7 +314,7 @@ func (con *Connection) SendExceptionVariables(s string, code uint32, variables [
 	var err error
 	data, err = proto.Marshal(e)
 	if err != nil {
-		zap.S().Fatal(err)
+		zap.L().Panic("marshal error", zap.Error(err))
 	}
 
 	buf := bytes.NewBuffer(make([]byte, 0, 8))

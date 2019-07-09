@@ -81,13 +81,13 @@ func (con *Connection) CallDuration(method string, poll time.Duration, args ...i
 	if rescode == -1 {
 		ex := &pb.Exception{}
 		if err := con.RecvValue(ex); err != nil {
-			zap.S().Warnf("received error while decoding exception: %v", err)
+			zap.L().Warn("received error while decoding exception", zap.Error(err))
 			return -2, err
 		}
 		var u *uuid.UUID
 		if len(ex.IncidentUuid) > 0 {
 			if uu, err := uuid.FromBytes(ex.IncidentUuid); err != nil {
-				zap.S().Warn(err)
+				zap.L().Warn("invalid uuid", zap.Error(err))
 			} else {
 				u = &uu
 			}
@@ -130,7 +130,7 @@ func (con *Connection) CallRepeat(ctx context.Context, method string, rate time.
 			}
 		case err != nil && res != -1:
 			// Something bad happened
-			zap.S().Warn(err)
+			zap.L().Warn("call attempt failed", zap.Error(err))
 
 			// Back-off at retry rate, to avoid aggressive looping
 			select {

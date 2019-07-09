@@ -114,11 +114,11 @@ func (con *Connection) Connect(endpoint string) error {
 // Reconnect will close and dump the old socket, resetting to a known state
 func (con *Connection) Reconnect() error {
 	if err := con.Socket.Close(); err != nil {
-		zap.S().Errorf("ignoring socket close error: %v", err)
+		zap.L().Error("ignoring socket close error", zap.Error(err))
 	}
 	if con.pollid != -1 {
 		if err := con.Poller.Remove(con.pollid); err != nil {
-			zap.S().Warnf("failed to remove socket from poller: %v", err)
+			zap.L().Warn("failed to remove socket from poller", zap.Error(err))
 			// just reset the poller
 			con.Poller = zmq.NewPoller()
 		}
