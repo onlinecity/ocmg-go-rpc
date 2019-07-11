@@ -14,18 +14,10 @@ func test(pool *rpc.ConnPool, timeout time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	client, err := pool.Get(ctx)
-	if err != nil {
-		zap.S().Fatal(err)
-	}
-	if body, err := client.Call(ctx, "TestSingleEcho", "foo"); err != nil || body != 1 {
-		zap.S().Fatalw("TestSingleEcho failed", "err", err, "body", body)
-	}
 	var foo string
-	if err := client.RecvValue(&foo); err != nil || foo != "foo" {
-		zap.S().Fatalw("TestSingleEcho error", "err", err, "foo", foo)
+	if ok, err := pool.Call(ctx, &foo, "TestSingleEcho", "foo"); err != nil {
+		zap.S().Fatalw("TestSingleEcho failed", "err", err, "ok", ok)
 	}
-	pool.Put(client)
 }
 
 func loop(pool *rpc.ConnPool, wg *sync.WaitGroup, iterations, id int) {

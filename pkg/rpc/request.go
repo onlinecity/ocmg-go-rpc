@@ -35,6 +35,42 @@ func (con *Connection) Call(ctx context.Context, method string, args ...interfac
 	return con.CallDuration(method, poll, args...)
 }
 
+// Call performs a single RPC call, with optional arguments, using a connection pool
+// Set the context to enforce timeouts, if a timeout is not set it might block the goroutine for 30s
+// It will grab an idle connection from the pool and return or reap it when it's done
+func (p *ConnPool) Call(ctx context.Context, out interface{}, method string, args ...interface{}) (bool, error) {
+	var err error
+	var client *Connection
+	var body int32
+	client, err = p.Get(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	// Perform call
+	body, err = client.Call(ctx, method, args...)
+
+	// Examine result
+	switch body {
+	case -2:
+		p.Remove(client)
+		return false, err
+	case -1:
+		p.Put(client)
+		return true, err
+	default:
+		err = client.RecvValue(out)
+		if err != nil {
+			p.Remove(client)
+			zap.L().Error("orpc recv error", zap.Error(err))
+			return false, err
+		}
+	}
+	// Release connection
+	p.Put(client)
+	return true, nil
+}
+
 // CallDuration performs a single RPC call, with a timeout and optional arguments
 // See Call() and CallRepeat() for go context based versions
 // Returns -2, context.DeadlineExceeded if the poll times out
