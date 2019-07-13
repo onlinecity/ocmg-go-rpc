@@ -224,10 +224,26 @@ func (con *Connection) SendValue(a interface{}, more bool, buf *bytes.Buffer) er
 			}
 		}
 	default:
+		// Slices with concrete protobufs need to be reflected
 		t := reflect.TypeOf(a)
+		if t.Kind() == reflect.Slice {
+			v := reflect.ValueOf(a)
+			partLen := v.Len()
+			for i := 0; i < partLen; i++ {
+				part := v.Index(i).Interface()
+				partMore := true
+				if i+1 == partLen {
+					partMore = more
+				}
+				if err := con.SendValue(part, partMore, buf); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
 		zap.L().Panic("unsupported type",
 			zap.Reflect("arg", a),
-			zap.Reflect("type", t),
+			zap.Stringer("type", t),
 			zap.Stack("stack"),
 		)
 	}
