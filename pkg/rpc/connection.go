@@ -140,8 +140,10 @@ func (con *Connection) Reconnect() error {
 
 // Close socket and release the poller
 func (con *Connection) Close() error {
-	if err := con.Socket.Close(); err != nil {
-		return err
+	if con.Socket != nil {
+		if err := con.Socket.Close(); err != nil {
+			return err
+		}
 	}
 	con.Poller = nil
 	return nil

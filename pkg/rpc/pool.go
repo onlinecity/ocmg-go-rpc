@@ -181,7 +181,9 @@ func (p *ConnPool) newConn(ctx context.Context, pooled bool) (*Connection, error
 
 	cn, err := NewConnection(zmq.REQ)
 	if err != nil {
-		cn.Close()
+		if cn != nil {
+			cn.Close()
+		}
 		return nil, err
 	}
 	if err := cn.Connect(endpoint); err != nil {
