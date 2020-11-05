@@ -7,10 +7,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	pb "github.com/onlinecity/ocmg-api/gen/go/oc/pb/rpc"
 	zmq "github.com/pebbe/zmq4"
 	"go.uber.org/zap"
-
-	pb "github.com/onlinecity/ocmg-api/gen/go/oc/pb/rpc"
 )
 
 const DefaultTimeout = 30 * time.Second
@@ -19,7 +18,7 @@ const DefaultTimeout = 30 * time.Second
 // Set the context to enforce timeouts, if a timeout is not set it might block the goroutine for 30s
 // It will inspect the reply header, and return it as the first argument
 // If it receives an upstream error, it will be returned as -1, upstream error
-// If a communication error occurs, it will be returned as -2, error
+// If a communication error occurs, it will be returned as -2, error.
 func (con *Connection) Call(ctx context.Context, method string, args ...interface{}) (int32, error) {
 	if ctx.Err() != nil {
 		return -2, ctx.Err()
@@ -37,7 +36,7 @@ func (con *Connection) Call(ctx context.Context, method string, args ...interfac
 
 // Call performs a single RPC call, with optional arguments, using a connection pool
 // Set the context to enforce timeouts, if a timeout is not set it might block the goroutine for 30s
-// It will grab an idle connection from the pool and return or reap it when it's done
+// It will grab an idle connection from the pool and return or reap it when it's done.
 func (p *ConnPool) Call(ctx context.Context, out interface{}, method string, args ...interface{}) (bool, error) {
 	var err error
 	var client *Connection
@@ -73,7 +72,7 @@ func (p *ConnPool) Call(ctx context.Context, out interface{}, method string, arg
 
 // CallDuration performs a single RPC call, with a timeout and optional arguments
 // See Call() and CallRepeat() for go context based versions
-// Returns -2, context.DeadlineExceeded if the poll times out
+// Returns -2, context.DeadlineExceeded if the poll times out.
 func (con *Connection) CallDuration(method string, poll time.Duration, args ...interface{}) (int32, error) {
 	con.SetUsedAt(time.Now())
 	bodylen := len(args)
@@ -141,7 +140,7 @@ func (con *Connection) CallDuration(method string, poll time.Duration, args ...i
 
 // CallRepeat will call the RPC method until a positive reply is received, honoring the context
 // Set the context to enforce overall timeout and/or cancellation
-// Specify the repeat rate, keep it large enough for the server to realistically respond, but low enough so retrying works
+// Specify the repeat rate, keep it large enough for the server to realistically respond, but low enough so retrying works.
 func (con *Connection) CallRepeat(ctx context.Context, method string, rate time.Duration, args ...interface{}) (int32, error) {
 	for {
 		if ctx.Err() != nil {

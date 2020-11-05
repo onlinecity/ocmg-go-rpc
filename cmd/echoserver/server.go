@@ -6,13 +6,12 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/onlinecity/ocmg-go-rpc/pkg/rpc"
 	zmq "github.com/pebbe/zmq4"
 	"go.uber.org/zap"
-
-	"github.com/onlinecity/ocmg-go-rpc/pkg/rpc"
 )
 
-// serverWorker behaves as a threaded worker, using inproc
+// serverWorker behaves as a threaded worker, using inproc.
 func serverWorker() {
 	// Setup ZeroMQ
 	conn, err := rpc.NewConnection(zmq.REP)

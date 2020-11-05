@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Connection wraps a ZMQ socket with a Poller for ease of use
+// Connection wraps a ZMQ socket with a Poller for ease of use.
 type Connection struct {
 	// Socket is a ZMQ socket
 	Socket *zmq.Socket
@@ -30,7 +30,7 @@ type Connection struct {
 	createdAt time.Time
 }
 
-// NewConnection creates a connection and adds it to the poller
+// NewConnection creates a connection and adds it to the poller.
 func NewConnection(t zmq.Type) (*Connection, error) {
 	soc, err := zmq.NewSocket(t)
 	if err != nil {
@@ -54,7 +54,7 @@ func (con *Connection) SetUsedAt(tm time.Time) {
 	atomic.StoreInt64(&con.usedAt, tm.Unix())
 }
 
-// Read makes the connection compatible with the Reader interface
+// Read makes the connection compatible with the Reader interface.
 func (con *Connection) Read(p []byte) (n int, err error) {
 	arg, err := con.Socket.RecvBytes(0)
 	if err != nil {
@@ -67,7 +67,7 @@ func (con *Connection) Read(p []byte) (n int, err error) {
 	return copy(p, arg), nil
 }
 
-// SimplifiedSRV adds our K8S hack and returns the first result
+// SimplifiedSRV adds our K8S hack and returns the first result.
 func SimplifiedSRV(ctx context.Context, service, domain string) (string, uint16, error) {
 	var fqdn string
 	if strings.HasSuffix(domain, "cluster.local") {
@@ -89,7 +89,7 @@ func SimplifiedSRV(ctx context.Context, service, domain string) (string, uint16,
 const DefaultDomain = "gwapi.svc.cluster.local"
 
 // ConnectSrv is compatible with our usual way of handling SRV records
-// DNS TTL is not honered
+// DNS TTL is not honered.
 func (con *Connection) ConnectSrv(service string, domain *string) error {
 	if domain == nil {
 		con.domain = DefaultDomain
@@ -105,13 +105,13 @@ func (con *Connection) ConnectSrv(service string, domain *string) error {
 	return con.Socket.Connect(con.Endpoint)
 }
 
-// Connect to an arbitrary endpoint, see also ConnectSrv()
+// Connect to an arbitrary endpoint, see also ConnectSrv().
 func (con *Connection) Connect(endpoint string) error {
 	con.Endpoint = endpoint
 	return con.Socket.Connect(endpoint)
 }
 
-// Reconnect will close and dump the old socket, resetting to a known state
+// Reconnect will close and dump the old socket, resetting to a known state.
 func (con *Connection) Reconnect() error {
 	if err := con.Socket.Close(); err != nil {
 		zap.L().Error("ignoring socket close error", zap.Error(err))
@@ -138,7 +138,7 @@ func (con *Connection) Reconnect() error {
 	return nil
 }
 
-// Close socket and release the poller
+// Close socket and release the poller.
 func (con *Connection) Close() error {
 	if con.Socket != nil {
 		if err := con.Socket.Close(); err != nil {
@@ -149,37 +149,37 @@ func (con *Connection) Close() error {
 	return nil
 }
 
-// HasMore is a convenience function
+// HasMore is a convenience function.
 func (con *Connection) HasMore() (bool, error) {
 	return con.Socket.GetRcvmore()
 }
 
-// RecvMessageBytes is a convenience function, wrapping the socket
+// RecvMessageBytes is a convenience function, wrapping the socket.
 func (con *Connection) RecvMessageBytes(flags zmq.Flag) (msg [][]byte, err error) {
 	return con.Socket.RecvMessageBytes(flags)
 }
 
-// Send is a convenience function, wrapping the socket
+// Send is a convenience function, wrapping the socket.
 func (con *Connection) Send(data string, flags zmq.Flag) (int, error) {
 	return con.Socket.Send(data, flags)
 }
 
-// SendBytes is a convenience function, wrapping the socket
+// SendBytes is a convenience function, wrapping the socket.
 func (con *Connection) SendBytes(data []byte, flags zmq.Flag) (int, error) {
 	return con.Socket.SendBytes(data, flags)
 }
 
-// Recv is a convenience function, wrapping the socket
+// Recv is a convenience function, wrapping the socket.
 func (con *Connection) Recv(flags zmq.Flag) (string, error) {
 	return con.Socket.Recv(flags)
 }
 
-// RecvBytes is a convenience function, wrapping the socket
+// RecvBytes is a convenience function, wrapping the socket.
 func (con *Connection) RecvBytes(flags zmq.Flag) ([]byte, error) {
 	return con.Socket.RecvBytes(flags)
 }
 
-// Poll will call the poller to poll the one socket we have
+// Poll will call the poller to poll the one socket we have.
 func (con *Connection) Poll(timeout time.Duration) (bool, error) {
 	polled, err := con.Poller.Poll(timeout)
 	if err != nil {

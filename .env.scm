@@ -1,0 +1,19 @@
+(specifications->manifest
+ '(
+   "bash"
+   "make"
+   "coreutils"
+   "go"
+   "gccgo"
+   "zeromq"
+   "czmq"
+   "cppzmq"
+   "git"
+   "python"
+   "pre-commit"
+   "python-pyyaml"
+   "python-identify"
+   "python-cfgv"
+   "python-toml"
+   "python-virtualenv"
+   ))

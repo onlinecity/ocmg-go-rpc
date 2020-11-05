@@ -5,7 +5,7 @@ import (
 	"github.com/onlinecity/ocmg-go-rpc/pkg/rpc"
 )
 
-// declare the interface for this service, used for reflection
+// declare the interface for this service, used for reflection.
 type RPCService interface {
 	TestVoid() error
 	TestSingleEcho([]byte) ([]byte, error)
@@ -16,7 +16,7 @@ type RPCService interface {
 	Idle() error
 }
 
-// implementation of this simple server
+// implementation of this simple server.
 type RPCHandler struct{}
 
 func (h *RPCHandler) TestVoid() error {

@@ -6,12 +6,11 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	zmq "github.com/pebbe/zmq4"
-	"go.uber.org/zap"
-
 	ocmg "github.com/onlinecity/ocmg-api/gen/go/oc/pb"
 	pb "github.com/onlinecity/ocmg-api/gen/go/oc/pb/rpc"
 	"github.com/onlinecity/ocmg-go-rpc/pkg/rpc"
+	zmq "github.com/pebbe/zmq4"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -19,8 +18,8 @@ func main() {
 	zap.ReplaceGlobals(logger)
 	defer logger.Sync() // nolint:errcheck
 
-	var endpoint = flag.String("endpoint", "tcp://localhost:5507", "where to connect")
-	var timeout = flag.Uint("timeout", 2000, "timeout in ms")
+	endpoint := flag.String("endpoint", "tcp://localhost:5507", "where to connect")
+	timeout := flag.Uint("timeout", 2000, "timeout in ms")
 	flag.Parse()
 
 	zap.S().Infof("connecting to %q\n", *endpoint)
@@ -108,5 +107,4 @@ func main() {
 		}
 		zap.S().Infow("exception received", "ex", ex, "uuid", ex.IncidentUUID)
 	}
-
 }
