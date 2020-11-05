@@ -12,11 +12,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
+	pb "github.com/onlinecity/ocmg-api/gen/go/oc/pb/rpc"
 	zmq "github.com/pebbe/zmq4"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-
-	pb "github.com/onlinecity/ocmg-api/gen/go/oc/pb/rpc"
 )
 
 type Error struct {
@@ -27,12 +26,12 @@ type Error struct {
 	IncidentUUID *uuid.UUID `json:"incident_uuid"`
 }
 
-// NewError creates a RPC Error incl. UUID
+// NewError creates a RPC Error incl. UUID.
 func NewError(message string, code uint32) *Error {
 	return NewErrorVariables(message, code, []string{})
 }
 
-// NewErrorVariables creates a RPC Error incl. UUID
+// NewErrorVariables creates a RPC Error incl. UUID.
 func NewErrorVariables(message string, code uint32, vars []string) *Error {
 	u := uuid.New()
 	return &Error{
@@ -43,12 +42,12 @@ func NewErrorVariables(message string, code uint32, vars []string) *Error {
 	}
 }
 
-// Error is mandated by the error interface
+// Error is mandated by the error interface.
 func (e *Error) Error() string {
 	return fmt.Sprintf("(%#04x) %s", e.Code, e.Message)
 }
 
-// Zap structured logging
+// Zap structured logging.
 func (e *Error) Zap() {
 	zap.L().Warn(e.Message,
 		zap.Uint32("code", e.Code),
@@ -83,7 +82,7 @@ func (e *Error) MarshalJSON() ([]byte, error) {
 }
 
 // RecvValue reads a single value from the socket and decodes it
-// Ie: var foo uint32; con.RecvValue(&foo)
+// Ie: var foo uint32; con.RecvValue(&foo).
 func (con *Connection) RecvValue(a interface{}) error {
 	switch v := a.(type) {
 	case *bool, *int, *int8, *int16, *int32, *int64, *uint, *uint8, *uint16, *uint32, *uint64:
@@ -134,7 +133,7 @@ func (con *Connection) RecvValue(a interface{}) error {
 }
 
 // RecvValues reads values from the socket and decodes them
-// Ie: var foo uint32; var bar bool; con.RecvValues(&foo, &bar)
+// Ie: var foo uint32; var bar bool; con.RecvValues(&foo, &bar).
 func (con *Connection) RecvValues(a ...interface{}) error {
 	for i := 0; i < len(a); i++ {
 		if err := con.RecvValue(a[i]); err != nil {
@@ -154,7 +153,7 @@ func (con *Connection) RecvValues(a ...interface{}) error {
 }
 
 // SendValue will encode a single value and send it on the socket
-// It requires a buffer with up to 8 bytes capacity for it's operation
+// It requires a buffer with up to 8 bytes capacity for it's operation.
 func (con *Connection) SendValue(a interface{}, more bool, buf *bytes.Buffer) error {
 	flag := zmq.SNDMORE
 	if !more {
@@ -251,7 +250,7 @@ func (con *Connection) SendValue(a interface{}, more bool, buf *bytes.Buffer) er
 }
 
 // SendReply will send a number of arguments back to a client
-// The number of arguments will be prependend on the wire
+// The number of arguments will be prependend on the wire.
 func (con *Connection) SendReply(a ...interface{}) error {
 	partslen := len(a)
 	buf := bytes.NewBuffer(make([]byte, 0, 8))
@@ -281,13 +280,13 @@ func (con *Connection) SendReply(a ...interface{}) error {
 	return nil
 }
 
-// SendVoid simply sends a zero'd uint32 on the wire
+// SendVoid simply sends a zero'd uint32 on the wire.
 func (con *Connection) SendVoid() error {
 	_, err := con.SendBytes(make([]byte, 4), 0)
 	return err
 }
 
-// SendError will convert a go error to an RPC exception and send it
+// SendError will convert a go error to an RPC exception and send it.
 func (con *Connection) SendError(e error) error {
 	if err, ok := e.(*Error); ok {
 		return con.SendExceptionVariables(
@@ -306,12 +305,12 @@ func (con *Connection) SendError(e error) error {
 	return con.SendError(ex)
 }
 
-// SendException send it without vars or uuid
+// SendException send it without vars or uuid.
 func (con *Connection) SendException(s string, code uint32) error {
 	return con.SendExceptionVariables(s, code, []string{}, nil)
 }
 
-// SendExceptionVariables send it with optional vars and/or uuid
+// SendExceptionVariables send it with optional vars and/or uuid.
 func (con *Connection) SendExceptionVariables(s string, code uint32, variables []string, u encoding.BinaryMarshaler) error {
 	// Create protobuf with exception
 	e := &pb.Exception{

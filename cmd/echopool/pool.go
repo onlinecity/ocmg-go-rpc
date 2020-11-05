@@ -45,7 +45,7 @@ func main() {
 	zap.ReplaceGlobals(logger)
 	defer logger.Sync() // nolint:errcheck
 
-	var endpoint = flag.String("endpoint", "tcp://localhost:5507", "where to connect")
+	endpoint := flag.String("endpoint", "tcp://localhost:5507", "where to connect")
 	flag.Parse()
 	zap.S().Infof("connecting to %q\n", *endpoint)
 

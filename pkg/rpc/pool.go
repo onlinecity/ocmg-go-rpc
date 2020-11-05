@@ -12,8 +12,10 @@ import (
 	"go.uber.org/zap"
 )
 
-var ErrClosed = errors.New("rpc: client is closed")
-var ErrPoolTimeout = errors.New("rpc: connection pool timeout")
+var (
+	ErrClosed      = errors.New("rpc: client is closed")
+	ErrPoolTimeout = errors.New("rpc: connection pool timeout")
+)
 
 var timers = sync.Pool{
 	New: func() interface{} {

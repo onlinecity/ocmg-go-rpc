@@ -4,6 +4,16 @@ linters:
     - maligned
     - prealloc
     - gochecknoglobals
+    - wsl
+    - testpackage
+    - gomnd
+    - godox
+    - gocognit
+    - gofumpt
+    - gocritic
+    - funlen
+    - nlreturn
+    - exhaustive
 
 linters-settings:
   govet:

@@ -5,13 +5,11 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
-	"go.uber.org/zap"
-
 	pb "github.com/onlinecity/ocmg-api/gen/go/oc/pb/rpc"
+	"go.uber.org/zap"
 )
 
 func ReflectService(service reflect.Type, name string, prefix uint32) *pb.Service {
-
 	// Build list of all procedures
 	procedures := make([]*pb.Procedure, 0, service.NumMethod())
 	for i := 0; i < service.NumMethod(); i++ {
